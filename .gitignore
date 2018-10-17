@@ -1,0 +1,7 @@
+.DS_Store
+*.zip
+test.json
+*.done
+vendor/
+*-packr.go
+pkg/

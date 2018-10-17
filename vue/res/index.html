@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vue.js Order Form</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body>
+<!-- v-cloak hides any un-compiled data bindings until the Vue instance is ready. -->
+<form id="main" v-cloak>
+	<h1><img src="logo.png"> Services</h1>
+	<ul>
+		<!-- Loop through the services array, assign a click handler, and set or
+			 remove the "active" css class if needed -->
+		<li v-for="service in services" v-on:click="toggleActive(service)" v-bind:class="{ 'active': service.active}">
+			<!-- Display the name and price for every entry in the array .
+                 Vue.js has a built in currency filter for formatting the price -->
+			{{service.name}} <span>{{service.price | currency}}</span>
+		</li>
+	</ul>
+
+	<div class="total">
+		<!-- Calculate the total price of all chosen services. Format it as currency. -->
+		Total: <span>{{total() | currency}}</span>
+	</div>
+</form>
+<script src="vue.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
