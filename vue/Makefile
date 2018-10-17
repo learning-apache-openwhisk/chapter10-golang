@@ -15,7 +15,7 @@ deploy: package.done $(BINZIP)
 	$(WSK) action get $(PACKAGE)/$(NAME) --url
 
 src/%/vendor:
-	cd $(@D) ; dep ensure
+	cd $(@D) ; GOPATH=$$PWD/../.. dep ensure
 
 src/app/app-packr.go:
 	cd src/app ; packr
