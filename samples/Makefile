@@ -16,6 +16,13 @@ hello-test: hello
 	$(WSK) action invoke $(PACKAGE)/hello -r
 	$(WSK) action invoke $(PACKAGE)/hello -p name Mike -r
 
+datetime: package.done
+	zip datetime.zip datetime.go util.go
+	$(WSK) action update $(PACKAGE)/datetime datetime.zip --main datetime --docker $(OW_COMPILER)
+
+datetime-test: datetime
+	$(WSK) action invoke $(PACKAGE)/datetime -p format "2001-01-02 3:4:5" -r
+	$(WSK) action invoke $(PACKAGE)/datetime -r
 
 package.done:
 	wsk package update $(PACKAGE)
