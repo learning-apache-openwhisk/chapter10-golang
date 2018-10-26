@@ -9,6 +9,9 @@ echo: package.done
 echo-test: echo
 	$(WSK) action invoke $(PACKAGE)/echo -p name Mike -r
 
+echoweb: package.done
+	$(WSK) action update $(PACKAGE)/echoweb echoweb.go --web true --docker $(OW_COMPILER)
+
 hello: package.done
 	$(WSK) action update $(PACKAGE)/hello hello.go --main hello --docker $(OW_COMPILER)
 

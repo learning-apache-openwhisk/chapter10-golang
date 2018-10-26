@@ -77,5 +77,4 @@ func ExampleWebResponse() {
 	// 200:1050:map[Content-Type:application/javascript]
 	// 200:1536:map[Content-Type:image/x-icon]
 	// 404:19:map[]
-
 }
