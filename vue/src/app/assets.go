@@ -23,11 +23,6 @@ func isBinary(ctype string) bool {
 // Asset extract a file from the box with its content type
 // returns either a content-type with "/" or an error code
 func Asset(path string) (string, string) {
-	// sane default
-	if path == "" || path == "/" {
-		path = "/index.html"
-	}
-
 	// identify the content type
 	splits := strings.Split(path, ".")
 	ext := splits[len(splits)-1]
@@ -73,5 +68,5 @@ func WebResponse(path string) map[string]interface{} {
 		res["statusCode"] = ctype
 		res["headers"] = map[string]string{}
 	}
-	return res
+	return resg
 }
