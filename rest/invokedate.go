@@ -5,12 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 )
 
 func url(operation string) string {
+	if operation[:1] == "/" {
+		return fmt.Sprintf("%s/api/v1/namespaces%s",
+			os.Getenv("__OW_API_HOST"),
+			operation)
+	}
 	return fmt.Sprintf("%s/api/v1/namespaces/%s/%s",
 		os.Getenv("__OW_API_HOST"),
 		os.Getenv("__OW_NAMESPACE"),
@@ -22,7 +28,24 @@ func auth() (string, string) {
 	return up[0], up[1]
 }
 
-func post(action string,
+func mkMap(key string, value interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		key: value,
+	}
+}
+
+func mkErr(err interface{}) map[string]interface{} {
+	switch v := err.(type) {
+	case error:
+		return mkMap("error", v.Error())
+	case string:
+		return mkMap("error", v)
+	default:
+		return mkMap("error", fmt.Sprintf("%v", err))
+	}
+}
+
+func mkPost(action string,
 	args map[string]interface{}) (*http.Request, error) {
 	data, err := json.Marshal(args)
 	if err != nil {
@@ -38,55 +61,60 @@ func post(action string,
 	return req, nil
 }
 
-func whiskInvoke(action string, args map[string]interface{},
-	blocking bool, result bool) (map[string]interface{}, error) {
-	invoke := fmt.Sprintf("actions/%s?blocking=%t&result=%t",
-		action, blocking, result)
-	req, err := post(invoke, args)
-	if err != nil {
-		return nil, err
-	}
+func doCall(req *http.Request) map[string]interface{} {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return mkErr(err)
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return mkErr(err)
 	}
 	// encode answer
 	var objmap map[string]interface{}
 	err = json.Unmarshal(body, &objmap)
 	if err != nil {
-		return nil, err
+		return mkErr(err)
 	}
-	return objmap, nil
+	return objmap
 }
 
-// Main invoke date using
-func Main(args map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{})
+func whiskInvoke(action string, args map[string]interface{},
+	blocking bool, result bool) map[string]interface{} {
+	invoke := fmt.Sprintf("actions/%s?blocking=%t&result=%t",
+		action, blocking, result)
+	req, err := mkPost(invoke, args)
+	if err != nil {
+		return mkErr(err)
+	}
+	return doCall(req)
+}
+
+// InvokeSort invokes date using the action parameter specified
+func InvokeSort(args map[string]interface{}) map[string]interface{} {
+
+	// retrieve action
 	action, ok := args["action"].(string)
 	if !ok {
-		out["error"] = "no action"
-		return out
+		return mkErr("no action")
 	}
-	message, ok := args["message"].(string)
+
+	// invoke action
+	res := whiskInvoke(action, args, true, true)
+	log.Printf("%v", res)
+	lines, ok := res["lines"].([]interface{})
 	if !ok {
-		out["error"] = "no message"
-		return out
+		return mkErr("cannot retrieve result")
 	}
-	res, err := whiskInvoke(action, out, true, true)
-	if err != nil {
-		out["error"] = err.Error()
-		return out
-	}
-	date, ok := res["date"].(string)
+
+	// retrieve message
+	result, ok := args["message"].(string)
 	if !ok {
-		out["error"] = "no date"
-		return out
+		result = ">>>"
 	}
-	out["result"] = fmt.Sprintf("%s %s", message, date)
-	return out
+	for _, v := range lines {
+		result += " " + v.(string)
+	}
+	return mkMap("result", result)
 }

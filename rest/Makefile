@@ -18,9 +18,12 @@ invokedate: golang.done utils2.done
 invokedate-test: invokedate
 	wsk action invoke golang/invokedate -p message "Date is" -r
 
-firetrigger: golang.done utils2.done trigger.done
-	wsk action update golang/firetrigger firetrigger.go -p trigger "golang-trigger" --docker $(OW_GOLANG)
-	wsk rule update golang-trigger-date  golang-trigger utils2/date
+firetrigger.zip: invokedate.go triggerdate.go
+	zip firetrigger.zip invokedate.go triggerdate.go
+
+firetrigger: golang.done utils2.done trigger.done firetrigger.zip 
+	wsk action update golang/firetrigger firetrigger.zip  --main fire -p trigger "golang-trigger"  --docker $(OW_GOLANG)
+	wsk rule update golang-trigger-date golang-trigger utils2/date
 
 firetrigger-test: firetrigger
 	wsk action invoke golang/firetrigger -p message "Date is" -r
