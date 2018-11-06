@@ -1,4 +1,4 @@
-OW_USER?=msciab
+OW_USER?=openwhisk
 OW_RUNTIME?=$(OW_USER)/actionloop
 OW_COMPILER?=$(OW_USER)/actionloop-golang-v1.11
 WSK?=wsk
@@ -35,8 +35,12 @@ clean:
 	rm  $(BINZIP) $(SRCZIP) package.done
 
 test:
-	$(WSK) action invoke $(PACKAGE)/$(NAME) -p expr "2 + 2" -r
-	$(WSK) action invoke $(PACKAGE)/$(NAME) -p expr "3 * 3" -r
+	$(WSK) action invoke $(PACKAGE)/$(NAME) -p expr "2 + 2" | awk  '{print $$6}' | tee last.id
+	$(WSK) activation logs $$(cat last.id) 
+	$(WSK) activation result $$(cat last.id) 
+	$(WSK) action invoke $(PACKAGE)/$(NAME) -p expr "3 + 3" | awk  '{print $$6}' | tee last.id
+	$(WSK) activation logs $$(cat last.id) 
+	$(WSK) activation result $$(cat last.id) 
 
 package.done:
 	$(WSK) package update $(PACKAGE)

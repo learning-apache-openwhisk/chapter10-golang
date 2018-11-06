@@ -44,12 +44,6 @@ func printMap(res map[string]interface{}) {
 	}
 }
 
-/*
-func printReq(req *http.Request, err error) {
-	fmt.Printf("url=%s\nauth=%s\n",
-	req.URL, req.BasicAuth())
-}*/
-
 func Example_url_auth() {
 	loadProps("wskprops")
 	fmt.Println(url("action"))
@@ -163,36 +157,44 @@ func Example_invoke() {
 	// }
 }
 
-func ExampleInvokeSort() {
+func ExampleInvoke() {
 	loadProps("~/.wskprops")
 	args := map[string]interface{}{
-		"lines":   []string{"b", "a", "d", "c"},
+		"text":    "b,a,d,c",
 		"action":  "utils2/sort",
 		"message": "Sorted:",
 	}
-	spew.Dump(InvokeSort(args))
+	spew.Dump(Invoke(args))
 	// Output:
 	// (map[string]interface {}) (len=1) {
 	//  (string) (len=6) "result": (string) (len=15) "Sorted: a b c d"
 	// }
 }
 
-func ExampleInvokeSort_err() {
+func ExampleInvoke_err() {
 	loadProps("~/.wskprops")
 	args := map[string]interface{}{}
-	spew.Dump(InvokeSort(args))
+	spew.Dump(Invoke(args))
 	args = map[string]interface{}{
 		"action": "missing",
 	}
-	spew.Dump(InvokeSort(args))
+	spew.Dump(Invoke(args))
 	args = map[string]interface{}{
-		"lines":  []string{"1", "7", "2", "5"},
+		"text":   "3,1,2",
+		"action": "missing",
+	}
+	spew.Dump(Invoke(args))
+	args = map[string]interface{}{
+		"text":   "1,7,2,5",
 		"action": "utils2/sort",
 	}
-	spew.Dump(InvokeSort(args))
+	spew.Dump(Invoke(args))
 	// Output:
 	// (map[string]interface {}) (len=1) {
 	//  (string) (len=5) "error": (string) (len=9) "no action"
+	// }
+	// (map[string]interface {}) (len=1) {
+	//  (string) (len=5) "error": (string) (len=7) "no text"
 	// }
 	// (map[string]interface {}) (len=1) {
 	//  (string) (len=5) "error": (string) (len=22) "cannot retrieve result"

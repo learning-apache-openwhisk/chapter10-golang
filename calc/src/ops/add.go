@@ -6,6 +6,6 @@ import (
 
 // Add adds 2 numbers
 func Add(a, b int) int {
-	log.Debug().Int("a", a).Int("b", b).Msg("Mul")
+	log.Debug().Int("a", a).Int("b", b).Msg("Add")
 	return a + b
 }

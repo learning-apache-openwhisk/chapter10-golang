@@ -5,3 +5,4 @@ test.json
 vendor/
 *-packr.go
 pkg/
+last.id

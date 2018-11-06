@@ -34,6 +34,11 @@ func mkMap(key string, value interface{}) map[string]interface{} {
 	}
 }
 
+func addMap(data map[string]interface{}, key string, value interface{}) map[string]interface{} {
+	data[key] = value
+	return data
+}
+
 func mkErr(err interface{}) map[string]interface{} {
 	switch v := err.(type) {
 	case error:
@@ -91,8 +96,8 @@ func whiskInvoke(action string, args map[string]interface{},
 	return doCall(req)
 }
 
-// InvokeSort invokes date using the action parameter specified
-func InvokeSort(args map[string]interface{}) map[string]interface{} {
+// Invoke invokes the sort using the action parameter specified
+func Invoke(args map[string]interface{}) map[string]interface{} {
 
 	// retrieve action
 	action, ok := args["action"].(string)
@@ -100,8 +105,15 @@ func InvokeSort(args map[string]interface{}) map[string]interface{} {
 		return mkErr("no action")
 	}
 
+	// prepare args
+	text, ok := args["text"].(string)
+	if !ok {
+		return mkErr("no text")
+	}
+	input := strings.Split(text, ",")
+
 	// invoke action
-	res := whiskInvoke(action, args, true, true)
+	res := whiskInvoke(action, mkMap("lines", input), true, true)
 	log.Printf("%v", res)
 	lines, ok := res["lines"].([]interface{})
 	if !ok {

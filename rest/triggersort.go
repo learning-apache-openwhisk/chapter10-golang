@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 )
-
 
 func whiskTrigger(trigger string,
 	args map[string]interface{}) map[string]interface{} {
@@ -46,17 +46,26 @@ func fireThenRetrieve(trigger string, args map[string]interface{}) map[string]in
 	return whiskInvoke(me, res, true, true)
 }
 
-// FireTrigger invoke date using triggers and retrieve the result
-// It can be invoked with the trigger to fire it
-// And with the activationId to retrieve the result
-func FireTrigger(args map[string]interface{}) map[string]interface{} {
+// Fire invoke sort using triggers then retrieve the result.
+// It can be invoked with "trigger" to fire that trigger,
+// and with the activationId to retrieve the result
+func Fire(args map[string]interface{}) map[string]interface{} {
 	id, ok := args["activationId"].(string)
 	if ok {
 		return whiskRetrieve(id)
 	}
+
+	// prepare args
+	text, ok := args["text"].(string)
+	if !ok {
+		return mkErr("no text")
+	}
+	input := mkMap("lines", strings.Split(text, ","))
+
+	// fire the trigger
 	trigger, ok := args["trigger"].(string)
 	if ok {
-		return fireThenRetrieve(trigger, args)
+		return fireThenRetrieve(trigger, input)
 	}
-	return mkErr("no tirgger defined")
+	return mkErr("no trigger defined")
 }

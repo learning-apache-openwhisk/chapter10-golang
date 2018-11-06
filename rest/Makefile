@@ -9,21 +9,25 @@ utils2.done:
 	&& touch utils2.done
 
 trigger.done:
-	wsk trigger create golang-trigger
+	-wsk trigger create golang-trigger
+	wsk rule update golang-trigger-date golang-trigger utils2/date
 	touch trigger.done
 
-invokedate: golang.done utils2.done
-	wsk action update golang/invokedate invokedate.go -p action "utils2/date" --docker $(OW_GOLANG)
+invokesort: golang.done utils2.done
+	wsk action update golang/invokesort invokesort.go \
+	-p action "utils2/sort" --main invoke --docker $(OW_GOLANG)
 
-invokedate-test: invokedate
-	wsk action invoke golang/invokedate -p message "Date is" -r
+invokesort-test: invokesort
+	wsk action invoke golang/invokesort -p message "Sorted: " -p text beta,alpha,gamma -r
 
-firetrigger.zip: invokedate.go triggerdate.go
-	zip firetrigger.zip invokedate.go triggerdate.go
+triggersort.zip: invokesort.go triggersort.go
+	zip firetrigger.zip invokesort.go triggersort.go
 
-firetrigger: golang.done utils2.done trigger.done firetrigger.zip 
-	wsk action update golang/firetrigger firetrigger.zip  --main fire -p trigger "golang-trigger"  --docker $(OW_GOLANG)
-	wsk rule update golang-trigger-date golang-trigger utils2/date
+triggersort: golang.done utils2.done trigger.done triggersort.zip 
+	wsk action update golang/triggersort firetrigger.zip  --main fire -p trigger "golang-trigger"  --docker $(OW_GOLANG)
 
-firetrigger-test: firetrigger
-	wsk action invoke golang/firetrigger -p message "Date is" -r
+#triggersort-test: firetrigger
+#	wsk action invoke golang/firetrigger -p message "Date is" -r
+
+test: golang.done utils2.done trigger.done
+	#go test
