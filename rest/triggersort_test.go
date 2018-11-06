@@ -1,6 +1,10 @@
 package main
 
-import "github.com/davecgh/go-spew/spew"
+import (
+	"strings"
+
+	"github.com/davecgh/go-spew/spew"
+)
 
 func Example_mkGet() {
 	loadProps("wskprops")
@@ -58,10 +62,56 @@ func Example_whiskRetrieve() {
 	// }
 }
 
+func Example_fire_retrieve() {
+	loadProps("~/.wskprops")
+	data := addMap(mkMap("payload", "a,b,c"), "separator", ",")
+	id := whiskInvoke("utils2/split", data, false, false)
+	res := whiskInvoke("golang/triggersort", id, true, true)
+	spew.Dump(res["response"])
+	// Output:
+	// (map[string]interface {}) (len=3) {
+	//  (string) (len=6) "result": (map[string]interface {}) (len=2) {
+	//   (string) (len=5) "lines": ([]interface {}) (len=3) {
+	//    (string) (len=1) "a",
+	//    (string) (len=1) "b",
+	//    (string) (len=1) "c"
+	//   },
+	//   (string) (len=7) "payload": (string) (len=5) "a,b,c"
+	//  },
+	//  (string) (len=6) "status": (string) (len=7) "success",
+	//  (string) (len=7) "success": (bool) true
+	// }
+}
+
+func Example_whiskTrigger() {
+	loadProps("~/.wskprops")
+	args := mkMap("list", strings.Split("c,b,a", ","))
+	id := whiskTrigger("golang-trigger", args)["activationId"].(string)
+	res := whiskRetrieve(id)
+	spew.Dump(res["response"].(map[string]interface{})["result"])
+	// Output:
+	// (map[string]interface {}) (len=1) {
+	//  (string) (len=4) "list": ([]interface {}) (len=3) {
+	//   (string) (len=1) "c",
+	//   (string) (len=1) "b",
+	//   (string) (len=1) "a"
+	//  }
+	// }
+}
+
 func ExampleFire() {
 	loadProps("~/.wskprops")
-	args := addMap(mkMap("trigger", "golang-trigger"),
-		"text", "b,a,d,c")
+	args := addMap(addMap(mkMap("text", "b,d,a,c"),
+		"trigger", "golang-trigger"),
+		"retrieve", "golang/triggersort")
 	spew.Dump(Fire(args))
 	// Output:
+	// (map[string]interface {}) (len=1) {
+	//  (string) (len=5) "lines": ([]interface {}) (len=4) {
+	//   (string) (len=1) "b",
+	//   (string) (len=1) "d",
+	//   (string) (len=1) "a",
+	//   (string) (len=1) "c"
+	//  }
+	// }
 }

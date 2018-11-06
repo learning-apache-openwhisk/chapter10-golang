@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -35,37 +35,52 @@ func whiskRetrieve(id string) map[string]interface{} {
 	return doCall(req)
 }
 
-func fireThenRetrieve(trigger string, args map[string]interface{}) map[string]interface{} {
-	res := whiskTrigger(trigger, args)
-	// check if we have the activationId
-	if _, ok := res["activationId"]; !ok {
-		return mkErr("cannot invoke trigger")
-	}
-	// call myself to retrieve the result
-	me := os.Getenv("__OW_ACTION_NAME")
-	return whiskInvoke(me, res, true, true)
-}
-
 // Fire invoke sort using triggers then retrieve the result.
 // It can be invoked with "trigger" to fire that trigger,
 // and with the activationId to retrieve the result
 func Fire(args map[string]interface{}) map[string]interface{} {
+
+	// request to retrieve the result
 	id, ok := args["activationId"].(string)
 	if ok {
+		log.Printf("retrieving %s", id)
 		return whiskRetrieve(id)
 	}
 
-	// prepare args
+	// get the trigger
+	trigger, ok := args["trigger"].(string)
+	if !ok {
+		return mkErr("no trigger defined")
+	}
+
+	// get the retrieve action
+	action, ok := args["retrieve"].(string)
+	if !ok {
+		return mkErr("no retrieve action defined")
+	}
+
+	// read the text argument
 	text, ok := args["text"].(string)
 	if !ok {
 		return mkErr("no text")
 	}
-	input := mkMap("lines", strings.Split(text, ","))
 
 	// fire the trigger
-	trigger, ok := args["trigger"].(string)
-	if ok {
-		return fireThenRetrieve(trigger, input)
+	input := mkMap("lines", strings.Split(text, ","))
+	log.Printf("invoking trigger=%s", trigger)
+	res := whiskTrigger(trigger, input)
+
+	// check if we have the activationId
+	if _, ok := res["activationId"]; !ok {
+		return mkErr("trigger did not return an activationId")
 	}
-	return mkErr("no trigger defined")
+
+	// invoke the action specified to retrieve the result
+	log.Printf("invoking %s", action)
+	res = whiskInvoke(action, res, true, true)
+	response, ok := res["response"].(map[string]interface{})
+	if !ok {
+		return mkErr("no response")
+	}
+	return response["result"].(map[string]interface{})
 }
