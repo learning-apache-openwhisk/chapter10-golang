@@ -40,23 +40,10 @@ func whiskRetrieve(id string) map[string]interface{} {
 // and with the activationId to retrieve the result
 func Fire(args map[string]interface{}) map[string]interface{} {
 
-	// request to retrieve the result
-	id, ok := args["activationId"].(string)
-	if ok {
-		log.Printf("retrieving %s", id)
-		return whiskRetrieve(id)
-	}
-
 	// get the trigger
 	trigger, ok := args["trigger"].(string)
 	if !ok {
 		return mkErr("no trigger defined")
-	}
-
-	// get the retrieve action
-	action, ok := args["retrieve"].(string)
-	if !ok {
-		return mkErr("no retrieve action defined")
 	}
 
 	// read the text argument
@@ -71,14 +58,14 @@ func Fire(args map[string]interface{}) map[string]interface{} {
 	res := whiskTrigger(trigger, input)
 
 	// check if we have the activationId
-	if _, ok := res["activationId"]; !ok {
+	id, ok := res["activationId"]
+	if !ok {
 		return mkErr("trigger did not return an activationId")
 	}
 
 	// invoke the action specified to retrieve the result
-	log.Printf("invoking %s", action)
-	res = whiskInvoke(action, res, true, true)
-	response, ok := res["response"].(map[string]interface{})
+	out := whiskRetrieve(res)
+	response, ok := out["response"].(map[string]interface{})
 	if !ok {
 		return mkErr("no response")
 	}
